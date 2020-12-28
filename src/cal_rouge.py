@@ -9,7 +9,7 @@ import sys
 import codecs
 
 # from onmt.utils.logging import init_logger, logger
-from others import pyrouge
+from src.others import pyrouge
 
 
 def process(data):

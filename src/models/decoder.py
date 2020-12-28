@@ -6,8 +6,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from models.encoder import PositionalEncoding
-from models.neural import MultiHeadedAttention, PositionwiseFeedForward, DecoderState
+from src.models.encoder import PositionalEncoding
+from src.models.neural import MultiHeadedAttention, PositionwiseFeedForward, DecoderState
 
 MAX_SIZE = 5000
 
@@ -59,9 +59,10 @@ class TransformerDecoderLayer(nn.Module):
             * all_input `[batch_size x current_step x model_dim]`
 
         """
-        dec_mask = torch.gt(tgt_pad_mask +
+        dec_mask = torch.gt(tgt_pad_mask.byte() +
                             self.mask[:, :tgt_pad_mask.size(1),
                                       :tgt_pad_mask.size(1)], 0)
+
         input_norm = self.layer_norm_1(inputs)
         all_input = input_norm
         if previous_input is not None:

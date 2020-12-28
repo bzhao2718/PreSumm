@@ -4,10 +4,11 @@ import numpy as np
 import torch
 from tensorboardX import SummaryWriter
 
-import distributed
-from models.reporter_ext import ReportMgr, Statistics
-from others.logging import logger
-from others.utils import test_rouge, rouge_results_to_str
+# import distributed
+from src import distributed
+from src.models.reporter_ext import ReportMgr, Statistics
+from src.others.logging import logger
+from src.others.utils import test_rouge, rouge_results_to_str
 
 
 def _tally_parameters(model):
@@ -232,32 +233,32 @@ class Trainer(object):
                 with torch.no_grad():
                     for batch in test_iter:
                         src = batch.src
-                        labels = batch.src_sent_labels
                         segs = batch.segs
                         clss = batch.clss
                         mask = batch.mask_src
                         mask_cls = batch.mask_cls
-
                         gold = []
                         pred = []
-
                         if (cal_lead):
                             selected_ids = [list(range(batch.clss.size(1)))] * batch.batch_size
                         elif (cal_oracle):
+                            labels = batch.src_sent_labels
                             selected_ids = [[j for j in range(batch.clss.size(1)) if labels[i][j] == 1] for i in
                                             range(batch.batch_size)]
                         else:
                             sent_scores, mask = self.model(src, segs, clss, mask, mask_cls)
 
-                            loss = self.loss(sent_scores, labels.float())
-                            loss = (loss * mask.float()).sum()
-                            batch_stats = Statistics(float(loss.cpu().data.numpy()), len(labels))
-                            stats.update(batch_stats)
-
                             sent_scores = sent_scores + mask.float()
                             sent_scores = sent_scores.cpu().data.numpy()
                             selected_ids = np.argsort(-sent_scores, 1)
-                        # selected_ids = np.sort(selected_ids,1)
+
+                            if (hasattr(batch, 'src_sent_labels')):
+                                labels = batch.src_sent_labels
+                                loss = self.loss(sent_scores, labels.float())
+                                loss = (loss * mask.float()).sum()
+                                batch_stats = Statistics(float(loss.cpu().data.numpy()), len(labels))
+                                stats.update(batch_stats)
+
                         for i, idx in enumerate(selected_ids):
                             _pred = []
                             if (len(batch.src_str[i]) == 0):

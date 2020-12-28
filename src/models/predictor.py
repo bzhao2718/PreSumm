@@ -9,12 +9,12 @@ import torch
 
 from tensorboardX import SummaryWriter
 
-from others.utils import rouge_results_to_str, test_rouge, tile
-from translate.beam import GNMTGlobalScorer
+from src.others.utils import rouge_results_to_str, test_rouge, tile
+from src.translate.beam import GNMTGlobalScorer
 
 
 def build_predictor(args, tokenizer, symbols, model, logger=None):
-    scorer = GNMTGlobalScorer(args.alpha,length_penalty='wu')
+    scorer = GNMTGlobalScorer(args.alpha, length_penalty='wu')
 
     translator = Translator(args, model, tokenizer, symbols, global_scorer=scorer, logger=logger)
     return translator
@@ -70,7 +70,8 @@ class Translator(object):
         self.beam_trace = self.dump_beam != ""
         self.beam_accum = None
 
-        tensorboard_log_dir = args.model_path
+        # tensorboard_log_dir = args.model_path
+        tensorboard_log_dir = args.tensorboard_summary_path
 
         self.tensorboard_writer = SummaryWriter(tensorboard_log_dir, comment="Unmt")
 
@@ -100,12 +101,13 @@ class Translator(object):
                 len(translation_batch["predictions"]))
         batch_size = batch.batch_size
 
-        preds, pred_score, gold_score, tgt_str, src =  translation_batch["predictions"],translation_batch["scores"],translation_batch["gold_score"],batch.tgt_str, batch.src
+        preds, pred_score, gold_score, tgt_str, src = translation_batch["predictions"], translation_batch["scores"], \
+                                                      translation_batch["gold_score"], batch.tgt_str, batch.src
 
         translations = []
         for b in range(batch_size):
             pred_sents = self.vocab.convert_ids_to_tokens([int(n) for n in preds[b][0]])
-            pred_sents = ' '.join(pred_sents).replace(' ##','')
+            pred_sents = ' '.join(pred_sents).replace(' ##', '')
             gold_sent = ' '.join(tgt_str[b].split())
             # translation = Translation(fname[b],src[:, b] if src is not None else None,
             #                           src_raw, pred_sents,
@@ -142,36 +144,35 @@ class Translator(object):
         ct = 0
         with torch.no_grad():
             for batch in data_iter:
-                if(self.args.recall_eval):
+                if (self.args.recall_eval):
                     gold_tgt_len = batch.tgt.size(1)
-                    self.min_length = gold_tgt_len + 20
-                    self.max_length = gold_tgt_len + 60
+                    # self.min_length = gold_tgt_len + 20
+                    # self.max_length = gold_tgt_len + 60
+                    self.min_length = gold_tgt_len + 10
+                    self.max_length = gold_tgt_len + 20
                 batch_data = self.translate_batch(batch)
                 translations = self.from_batch(batch_data)
 
                 for trans in translations:
                     pred, gold, src = trans
-                    pred_str = pred.replace('[unused0]', '').replace('[unused3]', '').replace('[PAD]', '').replace('[unused1]', '').replace(r' +', ' ').replace(' [unused2] ', '<q>').replace('[unused2]', '').strip()
+                    pred_str = pred.replace('[unused0]', '').replace('[unused3]', '').replace('[PAD]', '').replace(
+                        '[unused1]', '').replace(r' +', ' ').replace(' [unused2] ', '<q>').replace('[unused2]',
+                                                                                                   '').strip()
                     gold_str = gold.strip()
-                    if(self.args.recall_eval):
-                        _pred_str = ''
-                        gap = 1e3
-                        for sent in pred_str.split('<q>'):
-                            can_pred_str = _pred_str+ '<q>'+sent.strip()
-                            can_gap = math.fabs(len(_pred_str.split())-len(gold_str.split()))
-                            # if(can_gap>=gap):
-                            if(len(can_pred_str.split())>=len(gold_str.split())+10):
-                                pred_str = _pred_str
-                                break
-                            else:
-                                gap = can_gap
-                                _pred_str = can_pred_str
+                    if (self.args.recall_eval):
+                        # _pred_str = ''
+                        # for sent in pred_str.split('<q>'):
+                        #     can_pred_str = _pred_str+ '<q>'+sent.strip()
+                        #     can_gap = math.fabs(len(_pred_str.split())-len(gold_str.split()))
+                        #     # if(can_gap>=gap):
+                        #     if(len(can_pred_str.split())>=len(gold_str.split())+10):
+                        #         pred_str = _pred_str
+                        #         break
+                        #     else:
+                        #         _pred_str = can_pred_str
 
+                        pred_str = ' '.join(pred_str.split()[:len(gold_str.split())])
 
-
-                        # pred_str = ' '.join(pred_str.split()[:len(gold_str.split())])
-                    # self.raw_can_out_file.write(' '.join(pred).strip() + '\n')
-                    # self.raw_gold_out_file.write(' '.join(gold).strip() + '\n')
                     self.can_out_file.write(pred_str + '\n')
                     self.gold_out_file.write(gold_str + '\n')
                     self.src_out_file.write(src.strip() + '\n')
@@ -184,6 +185,7 @@ class Translator(object):
         self.gold_out_file.close()
         self.src_out_file.close()
 
+        self.logger.info("translate (predictor.py) > about to cal rouge score.")
         if (step != -1):
             rouges = self._report_rouge(gold_path, can_path)
             self.logger.info('Rouges at step %d \n%s' % (step, rouge_results_to_str(rouges)))
@@ -272,13 +274,13 @@ class Translator(object):
             decoder_input = alive_seq[:, -1].view(1, -1)
 
             # Decoder forward.
-            decoder_input = decoder_input.transpose(0,1)
+            decoder_input = decoder_input.transpose(0, 1)
 
             dec_out, dec_states = self.model.decoder(decoder_input, src_features, dec_states,
                                                      step=step)
 
             # Generator forward.
-            log_probs = self.generator.forward(dec_out.transpose(0,1).squeeze(0))
+            log_probs = self.generator.forward(dec_out.transpose(0, 1).squeeze(0))
             vocab_size = log_probs.size(-1)
 
             if step < min_length:
@@ -293,17 +295,17 @@ class Translator(object):
             # Flatten probs into a list of possibilities.
             curr_scores = log_probs / length_penalty
 
-            if(self.args.block_trigram):
+            if (self.args.block_trigram):
                 cur_len = alive_seq.size(1)
-                if(cur_len>3):
+                if (cur_len > 3):
                     for i in range(alive_seq.size(0)):
                         fail = False
                         words = [int(w) for w in alive_seq[i]]
                         words = [self.vocab.ids_to_tokens[w] for w in words]
-                        words = ' '.join(words).replace(' ##','').split()
-                        if(len(words)<=3):
+                        words = ' '.join(words).replace(' ##', '').split()
+                        if (len(words) <= 3):
                             continue
-                        trigrams = [(words[i-1],words[i],words[i+1]) for i in range(1,len(words)-1)]
+                        trigrams = [(words[i - 1], words[i], words[i + 1]) for i in range(1, len(words) - 1)]
                         trigram = tuple(trigrams[-1])
                         if trigram in trigrams[:-1]:
                             fail = True
@@ -325,10 +327,21 @@ class Translator(object):
                     topk_beam_index
                     + beam_offset[:topk_beam_index.size(0)].unsqueeze(1))
             select_indices = batch_index.view(-1)
-
+            # print(type(batch_index))
+            # print(f'bacth_index type: {batch_index.type()}')
+            # print(batch_index.shape)
+            # print(type(select_indices))
+            # print(f'select_indeces type: {select_indices.type()}')
+            # print(select_indices.shape)
             # Append last prediction.
+            # alive_seq = torch.cat(
+            #     [alive_seq.index_select(0, select_indices),
+            #      topk_ids.view(-1, 1)], -1)
+            select_indices = select_indices.int()
+            select_indices_int64 = torch.tensor(select_indices, dtype=torch.int64)
+            # print(f'select indice_int: {select_indices_int64}')
             alive_seq = torch.cat(
-                [alive_seq.index_select(0, select_indices),
+                [alive_seq.index_select(0, select_indices_int64),
                  topk_ids.view(-1, 1)], -1)
 
             is_finished = topk_ids.eq(self.end_token)
@@ -369,9 +382,12 @@ class Translator(object):
                     .view(-1, alive_seq.size(-1))
             # Reorder states.
             select_indices = batch_index.view(-1)
-            src_features = src_features.index_select(0, select_indices)
+            # @modify int64 type
+            select_indices_int64 = torch.tensor(select_indices, dtype=torch.int64)
+            src_features = src_features.index_select(0, select_indices_int64)
             dec_states.map_batch_fn(
-                lambda state, dim: state.index_select(dim, select_indices))
+                lambda state, dim: state.index_select(dim, select_indices_int64))
+            # lambda state, dim: state.index_select(dim, select_indices))
 
         return results
 

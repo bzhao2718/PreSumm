@@ -5,9 +5,9 @@ import torch.nn as nn
 from pytorch_transformers import BertModel, BertConfig
 from torch.nn.init import xavier_uniform_
 
-from models.decoder import TransformerDecoder
-from models.encoder import Classifier, ExtTransformerEncoder
-from models.optimizers import Optimizer
+from src.models.decoder import TransformerDecoder
+from src.models.encoder import Classifier, ExtTransformerEncoder
+from src.models.optimizers import Optimizer
 
 def build_optim(args, model, checkpoint):
     """ Build optimizer """
@@ -108,6 +108,7 @@ def get_generator(vocab_size, dec_hidden_size, device):
         nn.Linear(dec_hidden_size, vocab_size),
         gen_func
     )
+    # comment out, get errors, no cuda
     generator.to(device)
 
     return generator
@@ -165,7 +166,7 @@ class ExtSummarizer(nn.Module):
                     if p.dim() > 1:
                         xavier_uniform_(p)
 
-        self.to(device)
+        #self.to(device)
 
     def forward(self, src, segs, clss, mask_src, mask_cls):
         top_vec = self.bert(src, segs, mask_src)
@@ -202,7 +203,7 @@ class AbsSummarizer(nn.Module):
         self.vocab_size = self.bert.model.config.vocab_size
         tgt_embeddings = nn.Embedding(self.vocab_size, self.bert.model.config.hidden_size, padding_idx=0)
         if (self.args.share_emb):
-            tgt_embeddings.weight = copy.deepcopy(self.bert.model.embeddings.word_embeddings.weight)
+            tgt_embeddings = self.bert.model.embeddings.word_embeddings
 
         self.decoder = TransformerDecoder(
             self.args.dec_layers,
@@ -234,7 +235,7 @@ class AbsSummarizer(nn.Module):
                 tgt_embeddings.weight = copy.deepcopy(self.bert.model.embeddings.word_embeddings.weight)
                 self.decoder.embeddings = tgt_embeddings
                 self.generator[0].weight = self.decoder.embeddings.weight
-
+        #@comment out, no cuda
         self.to(device)
 
     def forward(self, src, tgt, segs, clss, mask_src, mask_tgt, mask_cls):

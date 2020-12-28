@@ -14,14 +14,15 @@ import time
 import torch
 from pytorch_transformers import BertTokenizer
 
-import distributed
-from models import data_loader, model_builder
-from models.data_loader import load_dataset
-from models.loss import abs_loss
-from models.model_builder import AbsSummarizer
-from models.predictor import build_predictor
-from models.trainer import build_trainer
-from others.logging import logger, init_logger
+# import distributed
+from src import distributed
+from src.models import data_loader, model_builder
+from src.models.data_loader import load_dataset
+from src.models.loss import abs_loss
+from src.models.model_builder import AbsSummarizer
+from src.models.predictor import build_predictor
+from src.models.trainer import build_trainer
+from src.others.logging import logger, init_logger
 
 model_flags = ['hidden_size', 'ff_size', 'heads', 'emb_size', 'enc_layers', 'enc_hidden_size', 'enc_ff_size',
                'dec_layers', 'dec_hidden_size', 'dec_ff_size', 'encoder', 'ff_actv', 'use_interval']
@@ -222,35 +223,9 @@ def test_abs(args, device_id, pt, step):
     symbols = {'BOS': tokenizer.vocab['[unused0]'], 'EOS': tokenizer.vocab['[unused1]'],
                'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused2]']}
     predictor = build_predictor(args, tokenizer, symbols, model, logger)
+    logger.info('test_abs > after the method build_predictor')
     predictor.translate(test_iter, step)
-
-
-def test_text_abs(args, device_id, pt, step):
-    device = "cpu" if args.visible_gpus == '-1' else "cuda"
-    if (pt != ''):
-        test_from = pt
-    else:
-        test_from = args.test_from
-    logger.info('Loading checkpoint from %s' % test_from)
-
-    checkpoint = torch.load(test_from, map_location=lambda storage, loc: storage)
-    opt = vars(checkpoint['opt'])
-    for k in opt.keys():
-        if (k in model_flags):
-            setattr(args, k, opt[k])
-    print(args)
-
-    model = AbsSummarizer(args, device, checkpoint)
-    model.eval()
-
-    test_iter = data_loader.Dataloader(args, load_dataset(args, 'test', shuffle=False),
-                                       args.test_batch_size, device,
-                                       shuffle=False, is_test=True)
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True, cache_dir=args.temp_dir)
-    symbols = {'BOS': tokenizer.vocab['[unused0]'], 'EOS': tokenizer.vocab['[unused1]'],
-               'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused2]']}
-    predictor = build_predictor(args, tokenizer, symbols, model, logger)
-    predictor.translate(test_iter, step)
+    logger.info('test_abs > after preeictor.translate')
 
 
 def baseline(args, cal_lead=False, cal_oracle=False):
@@ -332,3 +307,44 @@ def train_abs_single(args, device_id):
     trainer = build_trainer(args, device_id, model, optim, train_loss)
 
     trainer.train(train_iter_fct, args.train_steps)
+
+
+def test_text_abs(args):
+    logger.info('Loading checkpoint from %s' % args.test_from)
+    device = "cpu" if args.visible_gpus == '-1' else "cuda"
+
+    checkpoint = torch.load(args.test_from, map_location=lambda storage, loc: storage)
+    opt = vars(checkpoint['opt'])
+    for k in opt.keys():
+        if (k in model_flags):
+            setattr(args, k, opt[k])
+    print(args)
+
+    model = AbsSummarizer(args, device, checkpoint)
+    model.eval()
+    logger.info('test_text_abs > after the line model.eval() src_text: %s' % args.text_src)
+    test_iter = data_loader.load_text(args, args.text_src, args.text_tgt, device)
+
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True, cache_dir=args.temp_dir)
+    symbols = {'BOS': tokenizer.vocab['[unused0]'], 'EOS': tokenizer.vocab['[unused1]'],
+               'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused2]']}
+    logger.info('test_text_abs > after loading pretratined tokenizer.')
+    predictor = build_predictor(args, tokenizer, symbols, model, logger)
+    logger.info('test_text_abs > after build_predictor')
+    cal_rouge_score = check_gold_sum_exit(args)  # -1 don't calculate, otherwise cal
+    predictor.translate(test_iter, cal_rouge_score)
+    logger.info('test_text_abs > after predictor.translate')
+
+
+def check_gold_sum_exit(args):
+    """
+    check if the gold summary path is provided, if not, don't calculate rouge score
+    """
+    cal_rouge: int = 9 #any number but -1
+    not_cal_rouge: int = -1
+    if args is None:
+        return not_cal_rouge
+    if (args.text_tgt and args.text_tgt.strip()):
+        return cal_rouge
+    else:
+        return not_cal_rouge

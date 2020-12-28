@@ -11,14 +11,15 @@ from collections import Counter
 from os.path import join as pjoin
 
 import torch
-from multiprocess import Pool
+# from multiprocess import Pool
+from multiprocessing import Pool
 
-from others.logging import logger
-from others.tokenization import BertTokenizer
+from src.others.logging import logger
+from src.others.tokenization import BertTokenizer
 from pytorch_transformers import XLNetTokenizer
 
-from others.utils import clean
-from prepro.utils import _get_word_ngrams
+from src.others.utils import clean
+from src.prepro.utils import _get_word_ngrams
 
 import xml.etree.ElementTree as ET
 

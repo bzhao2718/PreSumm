@@ -12,11 +12,11 @@ from functools import partial
 try:
     from configparser import ConfigParser
 except ImportError:
-    from ConfigParser import ConfigParser
+    # from ConfigParser import ConfigParser
+    from configparser import ConfigParser
 
 from pyrouge.utils import log
 from pyrouge.utils.file_utils import verify_dir
-
 
 REMAP = {"-lrb-": "(", "-rrb-": ")", "-lcb-": "{", "-rcb-": "}",
          "-lsb-": "[", "-rsb-": "]", "``": '"', "''": '"'}
@@ -638,7 +638,8 @@ class Rouge155(object):
 
 if __name__ == "__main__":
     import argparse
-    from utils.argparsers import rouge_path_parser
+    # from src.utils.argparsers import rouge_path_parser
+    from pyrouge.utils.argparsers import rouge_path_parser
 
     parser = argparse.ArgumentParser(parents=[rouge_path_parser])
     args = parser.parse_args()

@@ -6,9 +6,9 @@ from __future__ import division
 
 import argparse
 import os
-from others.logging import init_logger
-from train_abstractive import validate_abs, train_abs, baseline, test_abs, test_text_abs
-from train_extractive import train_ext, validate_ext, test_ext
+from src.others.logging import init_logger
+from src.train_abstractive import validate_abs, train_abs, baseline, test_abs, test_text_abs
+from src.train_extractive import train_ext, validate_ext, test_ext, test_text_ext
 
 model_flags = ['hidden_size', 'ff_size', 'heads', 'emb_size', 'enc_layers', 'enc_hidden_size', 'enc_ff_size',
                'dec_layers', 'dec_hidden_size', 'dec_ff_size', 'encoder', 'ff_actv', 'use_interval']
@@ -27,16 +27,26 @@ def str2bool(v):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-task", default='ext', type=str, choices=['ext', 'abs'])
+    parser.add_argument("-task", default='abs', type=str, choices=['ext', 'abs'])
     parser.add_argument("-encoder", default='bert', type=str, choices=['bert', 'baseline'])
-    parser.add_argument("-mode", default='train', type=str, choices=['train', 'validate', 'test'])
-    parser.add_argument("-bert_data_path", default='../bert_data_new/cnndm')
+    parser.add_argument("-mode", default='train', type=str, choices=['train', 'validate', 'test', 'test_text'])
+    # parser.add_argument("-mode", default='test_text', type=str, choices=['train', 'validate', 'test', 'test_text'])
+    # parser.add_argument("-bert_data_path", default='../bert_data_new/cnndm')
+    parser.add_argument("-bert_data_path", default='../bert_data/cnndm')
     parser.add_argument("-model_path", default='../models/')
+    # parser.add_argument("-model_path", default='../models/model_step_148000.pt')
     parser.add_argument("-result_path", default='../results/cnndm')
+    # parser.add_argument("-result_path", default='/Users/jackz/Desktop/Test Results/mytest')
+
     parser.add_argument("-temp_dir", default='../temp')
+    # parser.add_argument("-text_src", default='')
+    # parser.add_argument("-text_tgt", default='')
+    parser.add_argument("-text_src", default='../raw_data/mytest_text.txt')
+    parser.add_argument("-text_tgt", default='')
 
     parser.add_argument("-batch_size", default=140, type=int)
     parser.add_argument("-test_batch_size", default=200, type=int)
+    parser.add_argument("-max_ndocs_in_batch", default=6, type=int)
 
     parser.add_argument("-max_pos", default=512, type=int)
     parser.add_argument("-use_interval", type=str2bool, nargs='?',const=True,default=True)
@@ -46,7 +56,8 @@ if __name__ == '__main__':
     parser.add_argument("-sep_optim", type=str2bool, nargs='?',const=True,default=False)
     parser.add_argument("-lr_bert", default=2e-3, type=float)
     parser.add_argument("-lr_dec", default=2e-3, type=float)
-    parser.add_argument("-use_bert_emb", type=str2bool, nargs='?',const=True,default=False)
+    # parser.add_argument("-use_bert_emb", type=str2bool, nargs='?',const=True,default=False)
+    parser.add_argument("-use_bert_emb", type=str2bool, nargs='?',const=True,default=True)
 
     parser.add_argument("-share_emb", type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument("-finetune_bert", type=str2bool, nargs='?', const=True, default=True)
@@ -90,24 +101,26 @@ if __name__ == '__main__':
 
     parser.add_argument("-save_checkpoint_steps", default=5, type=int)
     parser.add_argument("-accum_count", default=1, type=int)
-    parser.add_argument("-report_every", default=1, type=int)
+    parser.add_argument("-report_every", default=50, type=int)
     parser.add_argument("-train_steps", default=1000, type=int)
     parser.add_argument("-recall_eval", type=str2bool, nargs='?',const=True,default=False)
 
 
     parser.add_argument('-visible_gpus', default='-1', type=str)
     parser.add_argument('-gpu_ranks', default='0', type=str)
-    parser.add_argument('-log_file', default='../logs/cnndm.log')
+    parser.add_argument('-log_file', default='../logs/my_cnndm_log_train.log')
     parser.add_argument('-seed', default=666, type=int)
 
     parser.add_argument("-test_all", type=str2bool, nargs='?',const=True,default=False)
-    parser.add_argument("-test_from", default='')
+    # parser.add_argument("-test_from", default='')
+    parser.add_argument("-test_from", default='../models/model_step_148000.pt')
     parser.add_argument("-test_start_from", default=-1, type=int)
 
     parser.add_argument("-train_from", default='')
     parser.add_argument("-report_rouge", type=str2bool, nargs='?',const=True,default=True)
     parser.add_argument("-block_trigram", type=str2bool, nargs='?', const=True, default=True)
 
+    parser.add_argument("-tensorboard_summary_path", default="../models/")
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(',')))]
     args.world_size = len(args.gpu_ranks)
@@ -134,12 +147,7 @@ if __name__ == '__main__':
                 step = 0
             test_abs(args, device_id, cp, step)
         elif (args.mode == 'test_text'):
-            cp = args.test_from
-            try:
-                step = int(cp.split('.')[-2].split('_')[-1])
-            except:
-                step = 0
-                test_text_abs(args, device_id, cp, step)
+            test_text_abs(args)
 
     elif (args.task == 'ext'):
         if (args.mode == 'train'):
@@ -154,9 +162,5 @@ if __name__ == '__main__':
                 step = 0
             test_ext(args, device_id, cp, step)
         elif (args.mode == 'test_text'):
-            cp = args.test_from
-            try:
-                step = int(cp.split('.')[-2].split('_')[-1])
-            except:
-                step = 0
-                test_text_abs(args, device_id, cp, step)
+            test_text_ext(args)
+
