@@ -52,7 +52,7 @@ class ReportMgrBase(object):
         logger.info(*args, **kwargs)
 
     def report_training(self, step, num_steps, learning_rate,
-                        report_stats, multigpu=False):
+                        report_stats, multigpu=False, exp=None, args=None):
         """
         This is the user-defined batch-level traing progress
         report function.
@@ -74,7 +74,7 @@ class ReportMgrBase(object):
                 report_stats = \
                     Statistics.all_gather_stats(report_stats)
             self._report_training(
-                step, num_steps, learning_rate, report_stats)
+                step, num_steps, learning_rate, report_stats,exp,args)
             self.progress_step += 1
             return Statistics()
         else:
@@ -120,7 +120,7 @@ class ReportMgr(ReportMgrBase):
                 prefix, self.tensorboard_writer, learning_rate, step)
 
     def _report_training(self, step, num_steps, learning_rate,
-                         report_stats):
+                         report_stats, exp=None,args=None):
         """
         See base class method `ReportMgrBase.report_training`.
         """
@@ -132,6 +132,8 @@ class ReportMgr(ReportMgrBase):
                                    "progress",
                                    learning_rate,
                                    self.progress_step)
+        # neptune log metric
+        self._neptune_log(curr_exp=exp, args=args, step=step, learning_rate=learning_rate, stats_log=report_stats)
         report_stats = Statistics()
 
         return report_stats

@@ -10,6 +10,8 @@ from others.logging import logger
 from others.utils import test_rouge, rouge_results_to_str
 from others.stats_params import StatsParams
 from others.meters import TimeMeter
+import neptune
+from neptune.experiments import Experiment
 
 def _tally_parameters(model):
     n_params = sum([p.nelement() for p in model.parameters()])
@@ -101,11 +103,27 @@ class Trainer(object):
         self.loss = loss
 
         self.stats_params = StatsParams()
+        self.init_neptune()
 
         assert grad_accum_count > 0
         # Set model in training mode.
         if (model):
             self.model.train()
+
+    def init_neptune(self):
+        self.prj_TestPrj = 'bzhao271828/TestPrj'
+        self.prj_PreSum = 'bzhao271828/PreSum'
+        # neptune.set_project('bzhao271828/TestPrj')
+        # self.default_chkpoint_dir = "model_checkpoints/"
+        # ! remove this key after training
+        api_token = "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vdWkubmVwdHVuZS5haSIsImFwaV91cmwiOiJodHRwczovL3VpLm5lcHR1bmUuYWkiLCJhcGlfa2V5IjoiMzEyMTI3ZmMtYzNjZS00YzVlLTgyMzItODE1MTYzOGM0ZmExIn0="
+
+        exp_name = self.args.neptune_exp_name
+        neptune.init(api_token=api_token, project_qualified_name=self.args.neptune_prj_name)
+        self.curr_prj = neptune.set_project(project_qualified_name=self.args.neptune_prj_name)
+        # self.curr_prj = neptune.init(project_qualified_name=prj_name, api_token=api_token)
+        self.curr_exp: Experiment = self.curr_prj.create_experiment(name=exp_name, tags=self.args.neptune_exp_tags,
+                                                                    params=vars(self.args))
 
     def train(self, train_iter_fct, train_steps, valid_iter_fct=None, valid_steps=-1):
         """
@@ -160,11 +178,11 @@ class Trainer(object):
                         self._gradient_accumulation(
                             true_batchs, normalization, total_stats,
                             report_stats)
-
+                        # add neptune log
                         report_stats = self._maybe_report_training(
                             step, train_steps,
                             self.optims[0].learning_rate,
-                            report_stats)
+                            report_stats, self.curr_exp,self.args)
 
                         true_batchs = []
                         accum = 0
@@ -172,7 +190,9 @@ class Trainer(object):
                         if step % self.args.log_stat_params == 0:
                             elapse_time = time_meter.time_interval()
                             self.stats_params.add_to_list(elapse_time=elapse_time)
-                            # time_meter.reset()
+                        # log doesn't work here since there's a report_stats = Statistics() in the _mayber_report_training method
+                        # if step % self.args.neptune_metric_interval == 0:
+                        # self._neptune_log(step, self.optims[0].learning_rate, report_stats)
                         if (
                                 step % self.save_checkpoint_steps == 0 and self.gpu_rank == 0):  # ? why self.gpu_rank ==0, what if I have multiple gpus?
                             self._save(step)
@@ -351,7 +371,10 @@ class Trainer(object):
         # checkpoint_path = '%s_step_%d.pt' % (FLAGS.model_path, step)
         if (not os.path.exists(checkpoint_path)):
             torch.save(checkpoint, checkpoint_path)
-            return checkpoint, checkpoint_path
+        chkpoint_name = 'model_step_%d.pt' % step
+        artifact_dest = "model_checkpoints/" + chkpoint_name
+        self.curr_exp.log_artifact(checkpoint_path, destination=artifact_dest)
+        return checkpoint, checkpoint_path
 
     def _start_report_manager(self, start_time=None):
         """
@@ -379,7 +402,7 @@ class Trainer(object):
         return stat
 
     def _maybe_report_training(self, step, num_steps, learning_rate,
-                               report_stats):
+                               report_stats, exp=None, args=None):
         """
         Simple function to report training stats (if report_manager is set)
         see `onmt.utils.ReportManagerBase.report_training` for doc
@@ -387,7 +410,7 @@ class Trainer(object):
         if self.report_manager is not None:
             return self.report_manager.report_training(
                 step, num_steps, learning_rate, report_stats,
-                multigpu=self.n_gpu > 1)
+                multigpu=self.n_gpu > 1,exp=exp,args=args)
 
     def _report_step(self, learning_rate, step, train_stats=None,
                      valid_stats=None):
