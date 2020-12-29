@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-visible_gpus', default='-1', type=str)
     parser.add_argument('-gpu_ranks', default='0', type=str)
-    parser.add_argument('-log_file', default='../logs/my_cnndm_log_train.log')
+    parser.add_argument('-log_file', default='../logs/my_xsum_log_train.log')
     parser.add_argument('-seed', default=666, type=int)
 
     parser.add_argument("-test_all", type=str2bool, nargs='?',const=True,default=False)
@@ -121,6 +121,10 @@ if __name__ == '__main__':
     parser.add_argument("-train_from", default='')
     parser.add_argument("-report_rouge", type=str2bool, nargs='?',const=True,default=True)
     parser.add_argument("-block_trigram", type=str2bool, nargs='?', const=True, default=True)
+
+    parser.add_argument("-tensorboard_summary_path", default="../models/tensorboard/")
+    # for logging some stats params
+    parser.add_argument("-log_stat_params",default=1, type=int)
 
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(',')))]

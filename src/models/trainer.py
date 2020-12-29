@@ -8,7 +8,8 @@ import distributed
 from models.reporter import ReportMgr, Statistics
 from others.logging import logger
 from others.utils import test_rouge, rouge_results_to_str
-
+from others.stats_params import StatsParams
+from others.meters import TimeMeter
 
 def _tally_parameters(model):
     n_params = sum([p.nelement() for p in model.parameters()])
@@ -99,6 +100,8 @@ class Trainer(object):
 
         self.loss = loss
 
+        self.stats_params = StatsParams()
+
         assert grad_accum_count > 0
         # Set model in training mode.
         if (model):
@@ -135,6 +138,7 @@ class Trainer(object):
         total_stats = Statistics()
         report_stats = Statistics()
         self._start_report_manager(start_time=total_stats.start_time)
+        time_meter = TimeMeter()  # record training time
 
         while step <= train_steps:
 
@@ -165,7 +169,12 @@ class Trainer(object):
                         true_batchs = []
                         accum = 0
                         normalization = 0
-                        if (step % self.save_checkpoint_steps == 0 and self.gpu_rank == 0):
+                        if step % self.args.log_stat_params == 0:
+                            elapse_time = time_meter.time_interval()
+                            self.stats_params.add_to_list(elapse_time=elapse_time)
+                            # time_meter.reset()
+                        if (
+                                step % self.save_checkpoint_steps == 0 and self.gpu_rank == 0):  # ? why self.gpu_rank ==0, what if I have multiple gpus?
                             self._save(step)
 
                         step += 1
@@ -335,6 +344,7 @@ class Trainer(object):
             # 'generator': generator_state_dict,
             'opt': self.args,
             'optims': self.optims,
+            'elapse_time': self.stats_params.get_elapse(),
         }
         checkpoint_path = os.path.join(self.args.model_path, 'model_step_%d.pt' % step)
         logger.info("Saving checkpoint %s" % checkpoint_path)
