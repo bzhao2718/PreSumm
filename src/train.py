@@ -115,7 +115,9 @@ if __name__ == '__main__':
 
     parser.add_argument("-test_all", type=str2bool, nargs='?',const=True,default=False)
     # parser.add_argument("-test_from", default='')
-    parser.add_argument("-test_from", default='../models/model_step_148000.pt')
+    # parser.add_argument("-test_from", default='../models/model_step_148000.pt')
+    parser.add_argument("-test_from", default='')
+
     parser.add_argument("-test_start_from", default=-1, type=int)
 
     parser.add_argument("-train_from", default='')
@@ -124,7 +126,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-tensorboard_summary_path", default="../models/tensorboard/")
     # for logging some stats params
-    parser.add_argument("-log_stat_params",default=1, type=int)
+    parser.add_argument("-log_stat_params",default=100, type=int)
 
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(',')))]
