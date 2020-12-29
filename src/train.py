@@ -165,4 +165,3 @@ if __name__ == '__main__':
             test_ext(args, device_id, cp, step)
         elif (args.mode == 'test_text'):
             test_text_ext(args)
-
