@@ -50,7 +50,7 @@ class ReportMgrBase(object):
         logger.info(*args, **kwargs)
 
     def report_training(self, step, num_steps, learning_rate,
-                        report_stats, multigpu=False):
+                        report_stats, multigpu=False, exp=None, args=None):
         """
         This is the user-defined batch-level traing progress
         report function.
@@ -72,7 +72,7 @@ class ReportMgrBase(object):
 
         if step % self.report_every == 0:
             self._report_training(
-                step, num_steps, learning_rate, report_stats)
+                step, num_steps, learning_rate, report_stats,exp,args)
             self.progress_step += 1
         return Statistics()
 
@@ -116,7 +116,7 @@ class ReportMgr(ReportMgrBase):
                 prefix, self.tensorboard_writer, learning_rate, step)
 
     def _report_training(self, step, num_steps, learning_rate,
-                         report_stats):
+                         report_stats, exp=None, args=None):
         """
         See base class method `ReportMgrBase.report_training`.
         """
@@ -128,9 +128,22 @@ class ReportMgr(ReportMgrBase):
                                    "progress",
                                    learning_rate,
                                    step)
+        # neptune log metric
+        self._neptune_log(curr_exp=exp, args=args, step=step, learning_rate=learning_rate, stats_log=report_stats)
         report_stats = Statistics()
 
         return report_stats
+
+    def _neptune_log(self, curr_exp, args, step, learning_rate, stats_log):
+        """
+        log metrics to neptune.ai
+        """
+        if curr_exp and step % args.neptune_metric_interval == 0:
+            if stats_log.n_words > 0:
+                curr_exp.log_metric("accuracy", x=step, y=stats_log.accuracy())
+                curr_exp.log_metric("cross entropy", x=step, y=stats_log.xent())
+                curr_exp.log_metric("ppl", x=step, y=stats_log.ppl())
+                curr_exp.log_metric("lr", x=step, y=learning_rate)
 
     def _report_step(self, lr, step, train_stats=None, valid_stats=None):
         """

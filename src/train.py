@@ -101,7 +101,7 @@ if __name__ == '__main__':
     parser.add_argument("-warmup_steps_dec", default=8000, type=int)
     parser.add_argument("-max_grad_norm", default=0, type=float)
 
-    parser.add_argument("-save_checkpoint_steps", default=1, type=int)
+    parser.add_argument("-save_checkpoint_steps", default=1000, type=int)
     parser.add_argument("-accum_count", default=1, type=int)
     parser.add_argument("-report_every", default=1, type=int)
     parser.add_argument("-train_steps", default=1000, type=int)
@@ -123,14 +123,17 @@ if __name__ == '__main__':
     parser.add_argument("-block_trigram", type=str2bool, nargs='?', const=True, default=True)
 
     parser.add_argument("-tensorboard_summary_path", default="../models/tensorboard/")
-    # for logging some stats params
+    # for logging some stats params and neptune.ai
     parser.add_argument("-log_stat_params",default=1, type=int)
+    parser.add_argument("-neptune_exp_tags", default=['ExpTest'])
+    parser.add_argument("-neptune_prj_name", default='bzhao271828/TestPrj')
+    parser.add_argument("-neptune_exp_name", default='TestExp')
+    parser.add_argument("-neptune_metric_interval", default=1)
 
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(',')))]
     args.world_size = len(args.gpu_ranks)
     os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
-
 
     init_logger(args.log_file)
     device = "cpu" if args.visible_gpus == '-1' else "cuda"

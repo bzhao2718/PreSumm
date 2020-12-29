@@ -52,7 +52,7 @@ class ReportMgrBase(object):
         logger.info(*args, **kwargs)
 
     def report_training(self, step, num_steps, learning_rate,
-                        report_stats, multigpu=False):
+                        report_stats, multigpu=False, exp=None, args=None):
         """
         This is the user-defined batch-level traing progress
         report function.

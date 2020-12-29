@@ -1,4 +1,5 @@
 from collections import defaultdict
+import neptune
 
 
 class StatsParams(object):
@@ -22,3 +23,25 @@ class StatsParams(object):
 
     def get_elapse(self):
         return self.dict_list['elapsed_time']
+
+
+class NeptuneLogger(object):
+    def __init__(self):
+        self.prj_TestPrj = 'bzhao271828/TestPrj'
+        self.prj_PreSum = 'bzhao271828/PreSum'
+        # neptune.set_project('bzhao271828/TestPrj')
+        self.default_chkpoint_dir = "model_checkpoints/"
+
+    def init_neptune(self, prj_name, exp_name, exp_desc="", tags=["tests"]):
+        api_token = "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vdWkubmVwdHVuZS5haSIsImFwaV91cmwiOiJodHRwczovL3VpLm5lcHR1bmUuYWkiLCJhcGlfa2V5IjoiMzEyMTI3ZmMtYzNjZS00YzVlLTgyMzItODE1MTYzOGM0ZmExIn0="
+        if prj_name is None:
+            prj_name = self.prj_TestPrj
+        self.exp_name = exp_name
+        neptune.init(api_token=api_token)
+        self.curr_prj = neptune.set_project(project_qualified_name=prj_name)
+        # self.curr_prj = neptune.init(project_qualified_name=prj_name, api_token=api_token)
+        self.curr_exp = self.curr_prj.create_experiment(name=self.exp_name, description=exp_desc, tags=tags)
+
+    def ckpoint_path(self, chkpoint_name):
+        filepath = self.default_chkpoint_dir + chkpoint_name
+        return filepath
