@@ -173,3 +173,19 @@ if __name__ == '__main__':
             test_ext(args, device_id, cp, step)
         elif (args.mode == 'test_text'):
             test_text_ext(args)
+
+# python train.py  -task abs -mode train -bert_data_path ../bert_data/bert_data_xsum/xsum -dec_dropout 0.2  -model_path ../models/xsum -sep_optim true -lr_bert 0.002 -lr_dec 0.2 -save_checkpoint_steps 2 -batch_size 140 -train_steps 200000 -report_every 1 -accum_count 5 -use_bert_emb true -use_interval true -warmup_steps_bert 20000 -warmup_steps_dec 10000 -max_pos 512 -visible_gpus -1  -log_file ../logs/abs_bert_xsum
+# CPU, report every ... step, save every ... steps, train with checkpoint
+# ! python train.py  -task abs -mode train -bert_data_path ../bert_data/bert_data_xsum/xsum -train_from ../models/xsum/model_step_10.pt -dec_dropout 0.2  -model_path ../models/xsum -sep_optim true -lr_bert 0.002 -lr_dec 0.2 -save_checkpoint_steps 5 -batch_size 140 -train_steps 200000 -report_every 1 -accum_count 5 -use_bert_emb true -use_interval true -warmup_steps_bert 20000 -warmup_steps_dec 10000 -max_pos 512 -visible_gpus -1  -log_file ../logs/abs_bert_xsum
+
+# add this arg when training with checkpoint: -train_from ../models/xsum/model_step_10.pt
+
+# python train.py  -task abs -mode train -bert_data_path ../bert_data/bert_data_xsum/xsum -dec_dropout 0.2  -model_path ../models/xsum \
+# -sep_optim true -lr_bert 0.002 -lr_dec 0.2 -save_checkpoint_steps 20 -batch_size 140 -train_steps 200000 -report_every 1 -accum_count 5 \
+# -use_bert_emb true -use_interval true -warmup_steps_bert 20000 -warmup_steps_dec 10000 -max_pos 512 -visible_gpus -1  -log_file ../logs/abs_bert_xsum \
+# -neptune_api_token
+
+# -neptune_exp_tags []
+# -neptune_prj_name bzhao271828/PreSum-Abs
+# -neptune_exp_name PreSumAbs-Exp
+# -neptune_metric_interval 50
