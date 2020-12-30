@@ -172,17 +172,11 @@ class Trainer(object):
                     if accum == self.grad_accum_count:
                         reduce_counter += 1
                         if self.n_gpu > 1:
-                            normalization = sum(distributed
-                                                .all_gather_list
-                                                (normalization))
+                            normalization = sum(distributed.all_gather_list(normalization))
 
-                        self._gradient_accumulation(
-                            true_batchs, normalization, total_stats,
-                            report_stats)
+                        self._gradient_accumulation(true_batchs, normalization, total_stats,report_stats)
                         # add neptune log
-                        report_stats = self._maybe_report_training(
-                            step, train_steps,
-                            self.optims[0].learning_rate,
+                        report_stats = self._maybe_report_training(step, train_steps,self.optims[0].learning_rate,
                             report_stats, self.curr_exp,self.args)
 
                         true_batchs = []
@@ -371,9 +365,9 @@ class Trainer(object):
         # checkpoint_path = '%s_step_%d.pt' % (FLAGS.model_path, step)
         if (not os.path.exists(checkpoint_path)):
             torch.save(checkpoint, checkpoint_path)
-        chkpoint_name = 'model_step_%d.pt' % step
-        artifact_dest = "model_checkpoints/" + chkpoint_name
-        self.curr_exp.log_artifact(checkpoint_path, destination=artifact_dest)
+        # chkpoint_name = 'model_step_%d.pt' % step
+        # artifact_dest = "model_checkpoints/" + chkpoint_name
+        # self.curr_exp.log_artifact(checkpoint_path, destination=artifact_dest)
         return checkpoint, checkpoint_path
 
     def _start_report_manager(self, start_time=None):
@@ -408,22 +402,8 @@ class Trainer(object):
         see `onmt.utils.ReportManagerBase.report_training` for doc
         """
         if self.report_manager is not None:
-            return self.report_manager.report_training(
-                step, num_steps, learning_rate, report_stats,
+            return self.report_manager.report_training(step, num_steps, learning_rate, report_stats,
                 multigpu=self.n_gpu > 1,exp=exp,args=args)
-
-    def _neptune_log(self, curr_exp, args, step, learning_rate, stats_log):
-        """
-        log metrics to neptune.ai
-        """
-        if self.curr_exp and step % self.args.neptune_metric_interval == 0:
-            if self.n_gpu > 1:
-                stats_log = Statistics.all_gather_stats(stats_log)
-            if stats_log.n_words > 0:
-                self.curr_exp.log_metric("accuracy", x=step, y=stats_log.accuracy())
-                self.curr_exp.log_metric("cross entropy", x=step, y=stats_log.xent())
-                self.curr_exp.log_metric("ppl", x=step, y=stats_log.ppl())
-                self.curr_exp.log_metric("lr", x=step, y=learning_rate)
 
     def _report_step(self, learning_rate, step, train_stats=None,
                      valid_stats=None):

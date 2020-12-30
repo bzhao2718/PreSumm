@@ -71,8 +71,7 @@ class ReportMgrBase(object):
             report_stats = Statistics.all_gather_stats(report_stats)
 
         if step % self.report_every == 0:
-            self._report_training(
-                step, num_steps, learning_rate, report_stats,exp,args)
+            self._report_training(step, num_steps, learning_rate, report_stats,exp,args)
             self.progress_step += 1
         return Statistics()
 
@@ -120,8 +119,7 @@ class ReportMgr(ReportMgrBase):
         """
         See base class method `ReportMgrBase.report_training`.
         """
-        report_stats.output(step, num_steps,
-                            learning_rate, self.start_time)
+        report_stats.output(step, num_steps,learning_rate, self.start_time)
 
         # Log the progress using the number of batches on the x-axis.
         self.maybe_log_tensorboard(report_stats,
@@ -138,7 +136,7 @@ class ReportMgr(ReportMgrBase):
         """
         log metrics to neptune.ai
         """
-        if curr_exp and step % args.neptune_metric_interval == 0:
+        if curr_exp and step % int(args.neptune_metric_interval) == 0:
             if stats_log.n_words > 0:
                 curr_exp.log_metric("accuracy", x=step, y=stats_log.accuracy())
                 curr_exp.log_metric("cross entropy", x=step, y=stats_log.xent())
