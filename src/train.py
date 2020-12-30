@@ -23,8 +23,6 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-task", default='abs', type=str, choices=['ext', 'abs'])
@@ -51,15 +49,15 @@ if __name__ == '__main__':
     parser.add_argument("-max_ndocs_in_batch", default=6, type=int)
 
     parser.add_argument("-max_pos", default=512, type=int)
-    parser.add_argument("-use_interval", type=str2bool, nargs='?',const=True,default=True)
-    parser.add_argument("-large", type=str2bool, nargs='?',const=True,default=False)
+    parser.add_argument("-use_interval", type=str2bool, nargs='?', const=True, default=True)
+    parser.add_argument("-large", type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument("-load_from_extractive", default='', type=str)
 
-    parser.add_argument("-sep_optim", type=str2bool, nargs='?',const=True,default=False)
+    parser.add_argument("-sep_optim", type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument("-lr_bert", default=2e-3, type=float)
     parser.add_argument("-lr_dec", default=2e-3, type=float)
     # parser.add_argument("-use_bert_emb", type=str2bool, nargs='?',const=True,default=False)
-    parser.add_argument("-use_bert_emb", type=str2bool, nargs='?',const=True,default=True)
+    parser.add_argument("-use_bert_emb", type=str2bool, nargs='?', const=True, default=True)
 
     parser.add_argument("-share_emb", type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument("-finetune_bert", type=str2bool, nargs='?', const=True, default=True)
@@ -82,19 +80,17 @@ if __name__ == '__main__':
 
     parser.add_argument("-label_smoothing", default=0.1, type=float)
     parser.add_argument("-generator_shard_size", default=32, type=int)
-    parser.add_argument("-alpha",  default=0.6, type=float)
+    parser.add_argument("-alpha", default=0.6, type=float)
     parser.add_argument("-beam_size", default=5, type=int)
     parser.add_argument("-min_length", default=15, type=int)
     parser.add_argument("-max_length", default=150, type=int)
     parser.add_argument("-max_tgt_len", default=140, type=int)
 
-
-
     parser.add_argument("-param_init", default=0, type=float)
-    parser.add_argument("-param_init_glorot", type=str2bool, nargs='?',const=True,default=True)
+    parser.add_argument("-param_init_glorot", type=str2bool, nargs='?', const=True, default=True)
     parser.add_argument("-optim", default='adam', type=str)
     parser.add_argument("-lr", default=1, type=float)
-    parser.add_argument("-beta1", default= 0.9, type=float)
+    parser.add_argument("-beta1", default=0.9, type=float)
     parser.add_argument("-beta2", default=0.999, type=float)
     parser.add_argument("-warmup_steps", default=8000, type=int)
     parser.add_argument("-warmup_steps_bert", default=8000, type=int)
@@ -105,15 +101,14 @@ if __name__ == '__main__':
     parser.add_argument("-accum_count", default=1, type=int)
     parser.add_argument("-report_every", default=50, type=int)
     parser.add_argument("-train_steps", default=1000, type=int)
-    parser.add_argument("-recall_eval", type=str2bool, nargs='?',const=True,default=False)
-
+    parser.add_argument("-recall_eval", type=str2bool, nargs='?', const=True, default=False)
 
     parser.add_argument('-visible_gpus', default='-1', type=str)
     parser.add_argument('-gpu_ranks', default='0', type=str)
     parser.add_argument('-log_file', default='../logs/my_xsum_log_train.log')
     parser.add_argument('-seed', default=666, type=int)
 
-    parser.add_argument("-test_all", type=str2bool, nargs='?',const=True,default=False)
+    parser.add_argument("-test_all", type=str2bool, nargs='?', const=True, default=False)
     # parser.add_argument("-test_from", default='')
     # parser.add_argument("-test_from", default='../models/model_step_148000.pt')
     parser.add_argument("-test_from", default='')
@@ -121,17 +116,17 @@ if __name__ == '__main__':
     parser.add_argument("-test_start_from", default=-1, type=int)
 
     parser.add_argument("-train_from", default='')
-    parser.add_argument("-report_rouge", type=str2bool, nargs='?',const=True,default=True)
+    parser.add_argument("-report_rouge", type=str2bool, nargs='?', const=True, default=True)
     parser.add_argument("-block_trigram", type=str2bool, nargs='?', const=True, default=True)
 
     parser.add_argument("-tensorboard_summary_path", default="../models/tensorboard/")
     # for logging some stats params and neptune.ai
-    parser.add_argument("-log_stat_params",default=1, type=int)
+    parser.add_argument("-log_stat_params", default=1, type=int)
     parser.add_argument("-neptune_exp_tags", default=["PreSumAbs"])
     parser.add_argument("-neptune_prj_name", default='bzhao271828/TestPrj')
     parser.add_argument("-neptune_exp_name", default='TestExp')
     parser.add_argument("-neptune_metric_interval", default=1)
-
+    parser.add_argument("-neptune_api_token", default="") # manually pass the api_key
 
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(',')))]
@@ -186,9 +181,6 @@ if __name__ == '__main__':
                 step = 0
                 test_text_abs(args, device_id, cp, step)
 
-
-
-
 # python train.py  -task abs -mode train -bert_data_path ../bert_data/bert_data_xsum/xsum -dec_dropout 0.2  -model_path ../models/xsum -sep_optim true -lr_bert 0.002 -lr_dec 0.2 -save_checkpoint_steps 2 -batch_size 140 -train_steps 200000 -report_every 1 -accum_count 5 -use_bert_emb true -use_interval true -warmup_steps_bert 20000 -warmup_steps_dec 10000 -max_pos 512 -visible_gpus -1  -log_file ../logs/abs_bert_xsum
 # CPU, report every ... step, save every ... steps, train with checkpoint
 # ! python train.py  -task abs -mode train -bert_data_path ../bert_data/bert_data_xsum/xsum -train_from ../models/xsum/model_step_10.pt -dec_dropout 0.2  -model_path ../models/xsum -sep_optim true -lr_bert 0.002 -lr_dec 0.2 -save_checkpoint_steps 5 -batch_size 140 -train_steps 200000 -report_every 1 -accum_count 5 -use_bert_emb true -use_interval true -warmup_steps_bert 20000 -warmup_steps_dec 10000 -max_pos 512 -visible_gpus -1  -log_file ../logs/abs_bert_xsum
@@ -197,7 +189,7 @@ if __name__ == '__main__':
 
 # python train.py  -task abs -mode train -bert_data_path ../bert_data/bert_data_xsum/xsum -dec_dropout 0.2  -model_path ../models/xsum -sep_optim true -lr_bert 0.002 -lr_dec 0.2 -save_checkpoint_steps 20 -batch_size 140 -train_steps 200000 -report_every 1 -accum_count 5 -use_bert_emb true -use_interval true -warmup_steps_bert 20000 -warmup_steps_dec 10000 -max_pos 512 -visible_gpus -1  -log_file ../logs/abs_bert_xsum
 
-    # -neptune_exp_tags []
-    # -neptune_prj_name bzhao271828/PreSum-Abs
-    # -neptune_exp_name PreSumAbs-Exp
-    # -neptune_metric_interval 50
+# -neptune_exp_tags []
+# -neptune_prj_name bzhao271828/PreSum-Abs
+# -neptune_exp_name PreSumAbs-Exp
+# -neptune_metric_interval 50

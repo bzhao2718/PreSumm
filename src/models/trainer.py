@@ -171,17 +171,11 @@ class Trainer(object):
                     if accum == self.grad_accum_count:
                         reduce_counter += 1
                         if self.n_gpu > 1:
-                            normalization = sum(distributed
-                                                .all_gather_list
-                                                (normalization))
+                            normalization = sum(distributed.all_gather_list(normalization))
 
-                        self._gradient_accumulation(
-                            true_batchs, normalization, total_stats,
-                            report_stats)
+                        self._gradient_accumulation(true_batchs, normalization, total_stats,report_stats)
                         # add neptune log
-                        report_stats = self._maybe_report_training(
-                            step, train_steps,
-                            self.optims[0].learning_rate,
+                        report_stats = self._maybe_report_training(step, train_steps,self.optims[0].learning_rate,
                             report_stats, self.curr_exp,self.args)
 
                         true_batchs = []
