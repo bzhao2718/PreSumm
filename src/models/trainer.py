@@ -371,9 +371,9 @@ class Trainer(object):
         # checkpoint_path = '%s_step_%d.pt' % (FLAGS.model_path, step)
         if (not os.path.exists(checkpoint_path)):
             torch.save(checkpoint, checkpoint_path)
-        chkpoint_name = 'model_step_%d.pt' % step
-        artifact_dest = "model_checkpoints/" + chkpoint_name
-        self.curr_exp.log_artifact(checkpoint_path, destination=artifact_dest)
+        # chkpoint_name = 'model_step_%d.pt' % step
+        # artifact_dest = "model_checkpoints/" + chkpoint_name
+        # self.curr_exp.log_artifact(checkpoint_path, destination=artifact_dest)
         return checkpoint, checkpoint_path
 
     def _start_report_manager(self, start_time=None):

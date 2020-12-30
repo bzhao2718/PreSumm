@@ -138,7 +138,7 @@ class ReportMgr(ReportMgrBase):
         """
         log metrics to neptune.ai
         """
-        if curr_exp and step % args.neptune_metric_interval == 0:
+        if curr_exp and step % int(args.neptune_metric_interval) == 0:
             if stats_log.n_words > 0:
                 curr_exp.log_metric("accuracy", x=step, y=stats_log.accuracy())
                 curr_exp.log_metric("cross entropy", x=step, y=stats_log.xent())
