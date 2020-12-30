@@ -127,10 +127,11 @@ if __name__ == '__main__':
     parser.add_argument("-tensorboard_summary_path", default="../models/tensorboard/")
     # for logging some stats params and neptune.ai
     parser.add_argument("-log_stat_params",default=1, type=int)
-    parser.add_argument("-neptune_exp_tags", default=['ExpTest','run from colab'])
+    parser.add_argument("-neptune_exp_tags", default=["PreSumAbs"])
     parser.add_argument("-neptune_prj_name", default='bzhao271828/TestPrj')
     parser.add_argument("-neptune_exp_name", default='TestExp')
     parser.add_argument("-neptune_metric_interval", default=1)
+
 
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(',')))]
@@ -195,7 +196,8 @@ if __name__ == '__main__':
 # add this arg when training with checkpoint: -train_from ../models/xsum/model_step_10.pt
 
 # python train.py  -task abs -mode train -bert_data_path ../bert_data/bert_data_xsum/xsum -dec_dropout 0.2  -model_path ../models/xsum -sep_optim true -lr_bert 0.002 -lr_dec 0.2 -save_checkpoint_steps 20 -batch_size 140 -train_steps 200000 -report_every 1 -accum_count 5 -use_bert_emb true -use_interval true -warmup_steps_bert 20000 -warmup_steps_dec 10000 -max_pos 512 -visible_gpus -1  -log_file ../logs/abs_bert_xsum
+
     # -neptune_exp_tags []
-    # -neptune_prj_name bzhao271828/TestPrj
-    # -neptune_exp_name
-    # -neptune_metric_interval
+    # -neptune_prj_name bzhao271828/PreSum-Abs
+    # -neptune_exp_name PreSumAbs-Exp
+    # -neptune_metric_interval 50
