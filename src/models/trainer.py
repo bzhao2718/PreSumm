@@ -116,10 +116,10 @@ class Trainer(object):
         # neptune.set_project('bzhao271828/TestPrj')
         # self.default_chkpoint_dir = "model_checkpoints/"
         # ! remove this key after training
-        api_token = "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vdWkubmVwdHVuZS5haSIsImFwaV91cmwiOiJodHRwczovL3VpLm5lcHR1bmUuYWkiLCJhcGlfa2V5IjoiMzEyMTI3ZmMtYzNjZS00YzVlLTgyMzItODE1MTYzOGM0ZmExIn0="
+        # api_token = ""
 
         exp_name = self.args.neptune_exp_name
-        neptune.init(api_token=api_token, project_qualified_name=self.args.neptune_prj_name)
+        neptune.init(api_token=self.args.neptune_api_token, project_qualified_name=self.args.neptune_prj_name)
         self.curr_prj = neptune.set_project(project_qualified_name=self.args.neptune_prj_name)
         # self.curr_prj = neptune.init(project_qualified_name=prj_name, api_token=api_token)
         self.curr_exp: Experiment = self.curr_prj.create_experiment(name=exp_name, tags=self.args.neptune_exp_tags,
