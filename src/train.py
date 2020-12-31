@@ -127,6 +127,7 @@ if __name__ == '__main__':
     parser.add_argument("-neptune_exp_name", default='TestExp')
     parser.add_argument("-neptune_metric_interval", default=1)
     parser.add_argument("-neptune_api_token", default="") # manually pass the api_key
+    parser.add_argument("-neptune_save_point",default=92000) # save to neptune at this step
 
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(',')))]
