@@ -1,0 +1,23 @@
+
+git clone https://github.com/bzhao2718/PreSumm.git
+
+git branch
+
+git checkout train_cli_from_master
+
+git status
+
+# go into the src folder to setup pyrouge
+git clone https://github.com/bheinzerling/pyrouge
+
+python setup.py install
+git clone https://github.com/andersjo/pyrouge.git rouge
+# set the path
+
+# set rouge pathto this /content/drive/MyDrive/GoogleDrive/MyRepo/PreSumm/src/pyrouge/rouge/tools/ROUGE-1.5.5
+
+# For Colab
+# build/scripts-3.6/pyrouge_set_rouge_path /content/drive/MyDrive/GoogleDrive/MyRepo/PreSumm/src/pyrouge/rouge/tools/ROUGE-1.5.5
+
+# for gradient notebook
+build/scripts-3.6/pyrouge_set_rouge_path /notebooks/storage/myrepo/PreSumm/src/pyrouge/rouge/tools/ROUGE-1.5.5
