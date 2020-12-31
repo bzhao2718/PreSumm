@@ -59,9 +59,12 @@ class TransformerDecoderLayer(nn.Module):
             * all_input `[batch_size x current_step x model_dim]`
 
         """
-        dec_mask = torch.gt(tgt_pad_mask +
-                            self.mask[:, :tgt_pad_mask.size(1),
-                                      :tgt_pad_mask.size(1)], 0)
+        # original:
+        # dec_mask = torch.gt(tgt_pad_mask +self.mask[:, :tgt_pad_mask.size(1),:tgt_pad_mask.size(1)], 0)
+
+        # change it to the following according to https://github.com/nlpyang/PreSumm/issues/37
+        # trg_pad_mask is boolean while self.mask is unit8
+        dec_mask = torch.gt(tgt_pad_mask.int() +self.mask[:, :tgt_pad_mask.size(1),:tgt_pad_mask.size(1)].int(), 0)
         input_norm = self.layer_norm_1(inputs)
         all_input = input_norm
         if previous_input is not None:
