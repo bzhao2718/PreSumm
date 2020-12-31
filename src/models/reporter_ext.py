@@ -65,16 +65,44 @@ class ReportMgrBase(object):
         Returns:
             report_stats(Statistics): updated Statistics instance.
         """
+        # if self.start_time < 0:
+        #     raise ValueError("""ReportMgr needs to be started
+        #                         (set 'start_time' or use 'start()'""")
+        return self.neptune_report(step, num_steps, learning_rate, report_stats, exp, args) # use neptune report function instead
+        # if step % self.report_every == 0:  # add checking neptune log metric interval
+        #     if multigpu:
+        #         report_stats = \
+        #             Statistics.all_gather_stats(report_stats)
+        #     self._report_training(
+        #         step, num_steps, learning_rate, report_stats, exp, args)
+        #     self.progress_step += 1
+        #     return Statistics()
+        # else:
+        #     return report_stats
+
+    def neptune_report(self, step, num_steps, learning_rate,
+                       report_stats, multigpu=False, exp=None, args=None):
+        """
+        This is the user-defined batch-level traing progress
+        report function.
+
+        Args:
+            step(int): current step count.
+            num_steps(int): total number of batches.
+            learning_rate(float): current learning rate.
+            report_stats(Statistics): old Statistics instance.
+        Returns:
+            report_stats(Statistics): updated Statistics instance.
+        """
         if self.start_time < 0:
             raise ValueError("""ReportMgr needs to be started
                                 (set 'start_time' or use 'start()'""")
 
-        if step % self.report_every == 0:
+        if step % int(args.neptune_metric_interval) == 0:  # add checking neptune log metric interval
             if multigpu:
                 report_stats = \
                     Statistics.all_gather_stats(report_stats)
-            self._report_training(
-                step, num_steps, learning_rate, report_stats,exp,args)
+            self._neptune_report(step, num_steps, learning_rate, report_stats, self.report_every, exp, args)
             self.progress_step += 1
             return Statistics()
         else:
@@ -82,6 +110,10 @@ class ReportMgrBase(object):
 
     def _report_training(self, *args, **kwargs):
         """ To be overridden """
+        raise NotImplementedError()
+
+    def _neptune_report(self, step, num_steps, learning_rate,
+                        report_stats, report_every, exp=None, args=None):
         raise NotImplementedError()
 
     def report_step(self, lr, step, train_stats=None, valid_stats=None):
@@ -120,7 +152,7 @@ class ReportMgr(ReportMgrBase):
                 prefix, self.tensorboard_writer, learning_rate, step)
 
     def _report_training(self, step, num_steps, learning_rate,
-                         report_stats, exp=None,args=None):
+                         report_stats, exp=None, args=None):
         """
         See base class method `ReportMgrBase.report_training`.
         """
@@ -137,6 +169,35 @@ class ReportMgr(ReportMgrBase):
         report_stats = Statistics()
 
         return report_stats
+
+    def _neptune_report(self, step, num_steps, learning_rate, report_stats, report_every, exp=None, args=None):
+        """
+        combine _report_training with neptune log
+        """
+        self._neptune_log(curr_exp=exp, args=args, step=step, learning_rate=learning_rate, stats_log=report_stats)
+        if step % report_every == 0:
+            report_stats.output(step, num_steps,
+                                learning_rate, self.start_time)
+
+            # Log the progress using the number of batches on the x-axis.
+            self.maybe_log_tensorboard(report_stats,
+                                       "progress",
+                                       learning_rate,
+                                       self.progress_step)
+        report_stats = Statistics()
+
+        return report_stats
+
+    def _neptune_log(self, curr_exp, args, step, learning_rate, stats_log):
+        """
+        log metrics to neptune.ai
+        """
+        if curr_exp and step % int(args.neptune_metric_interval) == 0:
+            if stats_log.n_words > 0:
+                curr_exp.log_metric("accuracy", x=step, y=stats_log.accuracy())
+                curr_exp.log_metric("cross entropy", x=step, y=stats_log.xent())
+                curr_exp.log_metric("ppl", x=step, y=stats_log.ppl())
+                curr_exp.log_metric("lr", x=step, y=learning_rate)
 
     def _report_step(self, lr, step, train_stats=None, valid_stats=None):
         """
