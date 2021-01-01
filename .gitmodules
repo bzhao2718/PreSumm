@@ -1,0 +1,3 @@
+[submodule "src/wodeutil"]
+	path = src/wodeutil
+	url = https://github.com/bzhao2718/wodeutil.git

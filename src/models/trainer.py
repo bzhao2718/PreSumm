@@ -12,6 +12,7 @@ from others.stats_params import StatsParams
 from others.meters import TimeMeter
 import neptune
 from neptune.experiments import Experiment
+from wodeutil.ml.config.dynamic_params import DynamicConfig
 
 
 def _tally_parameters(model):
@@ -103,6 +104,7 @@ class Trainer(object):
 
         self.stats_params = StatsParams()
         self.init_neptune()
+        self.init_dynamic_control()
 
         assert grad_accum_count > 0
         # Set model in training mode.
@@ -123,6 +125,11 @@ class Trainer(object):
         # self.curr_prj = neptune.init(project_qualified_name=prj_name, api_token=api_token)
         self.curr_exp: Experiment = self.curr_prj.create_experiment(name=exp_name, tags=self.args.neptune_exp_tags,
                                                                     params=vars(self.args))
+
+    def init_dynamic_control(self):
+        config_path = os.path.join('others', 'dynamic.params')
+        self.dynamic_config = DynamicConfig().load_config(config_path)
+        print(vars(self.dynamic_config))
 
     def train(self, train_iter_fct, train_steps, valid_iter_fct=None, valid_steps=-1):
         """
