@@ -29,14 +29,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-task", default='abs', type=str, choices=['ext', 'abs'])
     parser.add_argument("-encoder", default='bert', type=str, choices=['bert', 'baseline'])
-    parser.add_argument("-mode", default='train', type=str, choices=['train', 'validate', 'test', 'test_text'])
+    parser.add_argument("-mode", default='validate', type=str, choices=['train', 'validate', 'test', 'test_text'])
     # parser.add_argument("-mode", default='test_text', type=str, choices=['train', 'validate', 'test', 'test_text'])
     # parser.add_argument("-bert_data_path", default='../bert_data_new/cnndm')
     parser.add_argument("-bert_data_path", default='../bert_data/bert_data_xsum/xsum')
     parser.add_argument("-model_path", default='../models/xsum')
     # parser.add_argument("-model_path", default='../models/model_step_148000.pt')
     # parser.add_argument("-result_path", default='../results/cnndm')
-    parser.add_argument("-result_path", default='../results/xsum')
+    parser.add_argument("-result_path", default='../results/xsum/validate')
 
     # parser.add_argument("-result_path", default='/Users/jackz/Desktop/Test Results/mytest')
 
@@ -110,12 +110,14 @@ if __name__ == '__main__':
 
     parser.add_argument('-visible_gpus', default='-1', type=str)
     parser.add_argument('-gpu_ranks', default='0', type=str)
-    parser.add_argument('-log_file', default='../logs/my_xsum_log_train.log')
+    # parser.add_argument('-log_file', default='../logs/my_xsum_log_train.log')
+    parser.add_argument('-log_file', default='../logs/my_xsum_log_valid.log')
+
     parser.add_argument('-seed', default=666, type=int)
 
     parser.add_argument("-test_all", type=str2bool, nargs='?',const=True,default=False)
-    # parser.add_argument("-test_from", default='')
-    parser.add_argument("-test_from", default='../models/model_step_148000.pt')
+    parser.add_argument("-test_from", default='')
+    # parser.add_argument("-test_from", default='../models/model_step_148000.pt')
     parser.add_argument("-test_start_from", default=-1, type=int)
 
     parser.add_argument("-train_from", default='')

@@ -107,7 +107,7 @@ class Trainer(object):
         self.loss = loss
 
         self.stats_params = StatsParams()
-        self.init_neptune()
+        # self.init_neptune()
         self.init_dynamic_control()
 
         assert grad_accum_count > 0
