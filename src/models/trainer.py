@@ -364,7 +364,7 @@ class Trainer(object):
         if (not os.path.exists(checkpoint_path)):
             torch.save(checkpoint, checkpoint_path)
 
-        if step % self.args.neptune_save_point == 0:
+        if step % int(self.args.neptune_save_point) == 0:
             chkpoint_name = 'model_step_%d.pt' % step
             artifact_dest = "model_checkpoints/" + chkpoint_name
             self.curr_exp.log_artifact(checkpoint_path, destination=artifact_dest)
