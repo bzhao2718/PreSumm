@@ -129,7 +129,7 @@ class Trainer(object):
     def init_dynamic_control(self):
         config_path = os.path.join('others', 'dynamic.params')
         self.dynamic_config = DynamicConfig().load_config(config_path)
-        print(vars(self.dynamic_config))
+        # print(vars(self.dynamic_config))
 
     def train(self, train_iter_fct, train_steps, valid_iter_fct=None, valid_steps=-1):
         """

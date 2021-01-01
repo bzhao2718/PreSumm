@@ -98,6 +98,9 @@ def chk_save_cond(step, report_every, dynamic_config: DynamicConfig):
 def setup_dynamic_control(config: DynamicConfig):
     # these are currently used
     config.dynamic_chk_every = 2000
+    config.neptune_save_chkpoint_on=True
+    config.neptune_metrics_log_on=True
+    config.neptune_chkpoint_every=12000
     config.log_time_point = 4000
     config.neptune_metrics_every: int = 300
     config.save_chkpoint_every: int = 4000  # save checkpoint
