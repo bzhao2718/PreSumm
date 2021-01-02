@@ -154,3 +154,6 @@ Thumbs.db
 # for training data files, PreSum
 .src
 .trg
+
+# ignore pyrouge folder
+!src/pyrouge/
