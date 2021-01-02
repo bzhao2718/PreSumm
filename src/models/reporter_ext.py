@@ -68,7 +68,7 @@ class ReportMgrBase(object):
         # if self.start_time < 0:
         #     raise ValueError("""ReportMgr needs to be started
         #                         (set 'start_time' or use 'start()'""")
-        return self.neptune_report(step, num_steps, learning_rate, report_stats, exp, args) # use neptune report function instead
+        return self.neptune_report(step, num_steps, learning_rate, report_stats, multigpu, exp=exp,args=args) # use neptune report function instead
         # if step % self.report_every == 0:  # add checking neptune log metric interval
         #     if multigpu:
         #         report_stats = \
@@ -102,7 +102,7 @@ class ReportMgrBase(object):
             if multigpu:
                 report_stats = \
                     Statistics.all_gather_stats(report_stats)
-            self._neptune_report(step, num_steps, learning_rate, report_stats, self.report_every, exp, args)
+            self._neptune_report(step, num_steps, learning_rate, report_stats, self.report_every, exp=exp, args=args)
             self.progress_step += 1
             return Statistics()
         else:

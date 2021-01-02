@@ -9,6 +9,13 @@ from models.reporter_ext import ReportMgr, Statistics
 from others.logging import logger
 from others.utils import test_rouge, rouge_results_to_str
 
+from others.stats_params import StatsParams
+from others.meters import TimeMeter
+import neptune
+from neptune.experiments import Experiment
+from wodeutil.ml.config.dynamic_params import DynamicConfig
+from dynamic_control import chk_dynamic_config_update, neptune_chkpoint_save_cond, log_neptune_metric_cond, \
+    update_dynamic_params
 
 def _tally_parameters(model):
     n_params = sum([p.nelement() for p in model.parameters()])
@@ -95,10 +102,36 @@ class Trainer(object):
         self.report_manager = report_manager
 
         self.loss = torch.nn.BCELoss(reduction='none')
+
+        self.stats_params = StatsParams()
+        self.init_neptune()
+        self.init_dynamic_control()
+
         assert grad_accum_count > 0
         # Set model in training mode.
         if (model):
             self.model.train()
+
+    def init_neptune(self):
+        self.prj_TestPrj = 'bzhao271828/TestPrj'
+        self.prj_PreSum = 'bzhao271828/PreSum'
+        # neptune.set_project('bzhao271828/TestPrj')
+        # self.default_chkpoint_dir = "model_checkpoints/"
+        # ! remove this key after training
+        # api_token = ""
+
+        exp_name = self.args.neptune_exp_name
+        neptune.init(api_token=self.args.neptune_api_token, project_qualified_name=self.args.neptune_prj_name)
+        self.curr_prj = neptune.set_project(project_qualified_name=self.args.neptune_prj_name)
+        # self.curr_prj = neptune.init(project_qualified_name=prj_name, api_token=api_token)
+        self.curr_exp: Experiment = self.curr_prj.create_experiment(name=exp_name, tags=self.args.neptune_exp_tags,
+                                                                    params=vars(self.args))
+
+    def init_dynamic_control(self):
+        self.params_path = config_path = os.path.join('others', 'dynamic.params')
+        self.dynamic_config = DynamicConfig().load_config(self.params_path)
+        # self.params_path = config_path
+        # print(vars(self.dynamic_config))
 
     def train(self, train_iter_fct, train_steps, valid_iter_fct=None, valid_steps=-1):
         """
@@ -130,6 +163,7 @@ class Trainer(object):
         total_stats = Statistics()
         report_stats = Statistics()
         self._start_report_manager(start_time=total_stats.start_time)
+        time_meter = TimeMeter()  # record training time
 
         while step <= train_steps:
 
@@ -154,12 +188,21 @@ class Trainer(object):
                         report_stats = self._maybe_report_training(
                             step, train_steps,
                             self.optim.learning_rate,
-                            report_stats)
+                            report_stats, self.curr_exp, self.args)
 
                         true_batchs = []
                         accum = 0
                         normalization = 0
-                        if (step % self.save_checkpoint_steps == 0 and self.gpu_rank == 0):
+
+                        update_dynamic_params(step, self.dynamic_config, self.params_path)
+                        if step % self.args.log_stat_params == 0:
+                            elapse_time = time_meter.time_interval()
+                            self.stats_params.add_to_list(elapse_time=elapse_time)
+                        # log doesn't work here since there's a report_stats = Statistics() in the _mayber_report_training method
+
+                        # ? why self.gpu_rank ==0, what if I have multiple gpus?
+                        if (step % self.save_checkpoint_steps == 0 and self.gpu_rank == 0) or (
+                        neptune_chkpoint_save_cond(step, dynamic_config=self.dynamic_config)):
                             self._save(step)
 
                         step += 1
@@ -355,14 +398,21 @@ class Trainer(object):
             'model': model_state_dict,
             # 'generator': generator_state_dict,
             'opt': self.args,
-            'optim': self.optim,
+            'optims': self.optims,
+            'elapse_time': self.stats_params.get_elapse(),
         }
         checkpoint_path = os.path.join(self.args.model_path, 'model_step_%d.pt' % step)
         logger.info("Saving checkpoint %s" % checkpoint_path)
         # checkpoint_path = '%s_step_%d.pt' % (FLAGS.model_path, step)
-        if (not os.path.exists(checkpoint_path)):
-            torch.save(checkpoint, checkpoint_path)
-            return checkpoint, checkpoint_path
+
+        if step % self.save_checkpoint_steps == 0 and self.gpu_rank == 0:
+            if (not os.path.exists(checkpoint_path)):
+                torch.save(checkpoint, checkpoint_path)
+        if neptune_chkpoint_save_cond(step, self.dynamic_config):
+            chkpoint_name = 'model_step_%d.pt' % step
+            artifact_dest = "model_checkpoints/" + chkpoint_name
+            self.curr_exp.log_artifact(checkpoint_path, destination=artifact_dest)
+        return checkpoint, checkpoint_path
 
     def _start_report_manager(self, start_time=None):
         """
@@ -390,7 +440,7 @@ class Trainer(object):
         return stat
 
     def _maybe_report_training(self, step, num_steps, learning_rate,
-                               report_stats):
+                               report_stats, exp=None, args=None):
         """
         Simple function to report training stats (if report_manager is set)
         see `onmt.utils.ReportManagerBase.report_training` for doc
@@ -398,7 +448,7 @@ class Trainer(object):
         if self.report_manager is not None:
             return self.report_manager.report_training(
                 step, num_steps, learning_rate, report_stats,
-                multigpu=self.n_gpu > 1)
+                multigpu=self.n_gpu > 1, exp=exp, args=args)
 
     def _report_step(self, learning_rate, step, train_stats=None,
                      valid_stats=None):
