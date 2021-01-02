@@ -156,7 +156,7 @@ def validate_abs(args, device_id):
                 if (time_of_cp > timestep):
                     timestep = time_of_cp
                     step = int(cp.split('.')[-2].split('_')[-1])
-                    # validate(args, device_id, cp, step)
+                    validate(args, device_id, cp, step)
                     test_abs(args, device_id, cp, step)
 
             cp_files = sorted(glob.glob(os.path.join(args.model_path, 'model_step_*.pt')))
@@ -228,8 +228,8 @@ def test_abs(args, device_id, pt, step):
                'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused2]']}
     predictor = build_predictor(args, tokenizer, symbols, model, logger)
     logger.info('test_abs > after the method build_predictor')
-    # predictor.translate(test_iter, step)
-    predictor.valid_rouge_test(step)
+    predictor.translate(test_iter, step)
+    # predictor.valid_rouge_test(step)
     logger.info('test_abs > after preeictor.translate')
 
 
