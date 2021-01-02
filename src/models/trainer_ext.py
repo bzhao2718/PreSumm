@@ -398,7 +398,7 @@ class Trainer(object):
             'model': model_state_dict,
             # 'generator': generator_state_dict,
             'opt': self.args,
-            'optims': self.optims,
+            'optims': self.optim,
             'elapse_time': self.stats_params.get_elapse(),
         }
         checkpoint_path = os.path.join(self.args.model_path, 'model_step_%d.pt' % step)
