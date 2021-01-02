@@ -32,7 +32,9 @@ if __name__ == '__main__':
     parser.add_argument("-mode", default='validate', type=str, choices=['train', 'validate', 'test', 'test_text'])
     # parser.add_argument("-mode", default='test_text', type=str, choices=['train', 'validate', 'test', 'test_text'])
     # parser.add_argument("-bert_data_path", default='../bert_data_new/cnndm')
-    parser.add_argument("-bert_data_path", default='../bert_data/bert_data_xsum/xsum')
+    # parser.add_argument("-bert_data_path", default='../bert_data/bert_data_xsum/xsum')
+    parser.add_argument("-bert_data_path", default='../bert_data/xsum_valid/xsum') # for validation
+
     parser.add_argument("-model_path", default='../models/xsum')
     # parser.add_argument("-model_path", default='../models/model_step_148000.pt')
     # parser.add_argument("-result_path", default='../results/cnndm')

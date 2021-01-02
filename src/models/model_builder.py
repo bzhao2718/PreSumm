@@ -166,7 +166,7 @@ class ExtSummarizer(nn.Module):
                     if p.dim() > 1:
                         xavier_uniform_(p)
 
-        #self.to(device)
+        self.to(device)
 
     def forward(self, src, segs, clss, mask_src, mask_cls):
         top_vec = self.bert(src, segs, mask_src)
@@ -203,7 +203,7 @@ class AbsSummarizer(nn.Module):
         self.vocab_size = self.bert.model.config.vocab_size
         tgt_embeddings = nn.Embedding(self.vocab_size, self.bert.model.config.hidden_size, padding_idx=0)
         if (self.args.share_emb):
-            tgt_embeddings = self.bert.model.embeddings.word_embeddings
+            tgt_embeddings.weight = copy.deepcopy(self.bert.model.embeddings.word_embeddings.weight)
 
         self.decoder = TransformerDecoder(
             self.args.dec_layers,

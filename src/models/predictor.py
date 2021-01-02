@@ -131,6 +131,8 @@ class Translator(object):
         can_path = self.args.result_path + '.%d.candidate' % step
         self.gold_out_file = codecs.open(gold_path, 'w', 'utf-8')
         self.can_out_file = codecs.open(can_path, 'w', 'utf-8')
+        # eg. ../results/xsum/validate.128000.candidate
+        # eg. ../results/xsum/validate.128000.gold
 
         # raw_gold_path = self.args.result_path + '.%d.raw_gold' % step
         # raw_can_path = self.args.result_path + '.%d.raw_candidate' % step
@@ -193,6 +195,16 @@ class Translator(object):
                 self.tensorboard_writer.add_scalar('test/rouge1-F', rouges['rouge_1_f_score'], step)
                 self.tensorboard_writer.add_scalar('test/rouge2-F', rouges['rouge_2_f_score'], step)
                 self.tensorboard_writer.add_scalar('test/rougeL-F', rouges['rouge_l_f_score'], step)
+
+    def valid_rouge_test(self, step):
+        # eg. ../results/xsum/validate.128000.candidate
+        # eg. ../results/xsum/validate.128000.gold
+        can_path = "../results/xsum/validate.128000.candidate"
+        gold_path="../results/xsum/validate.128000.gold"
+        self.logger.info("translate (predictor.py) > about to cal rouge score.")
+        if (step != -1):
+            rouges = self._report_rouge(gold_path, can_path)
+            self.logger.info('Rouges at step %d \n%s' % (step, rouge_results_to_str(rouges)))
 
     def _report_rouge(self, gold_path, can_path):
         self.logger.info("Calculating Rouge")
