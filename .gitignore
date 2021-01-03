@@ -156,4 +156,4 @@ Thumbs.db
 .trg
 
 # include the pyrouge folder
-#!src/pyrouge/
+src/pyrouge/
