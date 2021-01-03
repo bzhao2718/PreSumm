@@ -157,3 +157,4 @@ Thumbs.db
 
 # exclude pyrouge folder
 !src/pyrouge/*
+!src/pyrouge/*.*
