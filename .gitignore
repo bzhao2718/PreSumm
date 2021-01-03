@@ -156,4 +156,4 @@ Thumbs.db
 .trg
 
 # ignore pyrouge folder
-!src/pyrouge/
+#!src/pyrouge/
