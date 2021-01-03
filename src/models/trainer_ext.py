@@ -292,15 +292,17 @@ class Trainer(object):
                         else:
                             sent_scores, mask = self.model(src, segs, clss, mask, mask_cls)
 
-                            loss = self.loss(sent_scores, labels.float())
-                            loss = (loss * mask.float()).sum()
-                            batch_stats = Statistics(float(loss.cpu().data.numpy()), len(labels))
-                            stats.update(batch_stats)
-
                             sent_scores = sent_scores + mask.float()
                             sent_scores = sent_scores.cpu().data.numpy()
                             selected_ids = np.argsort(-sent_scores, 1)
-                        # selected_ids = np.sort(selected_ids,1)
+
+                            if (hasattr(batch, 'src_sent_labels')):
+                                labels = batch.src_sent_labels
+                                loss = self.loss(sent_scores, labels.float())
+                                loss = (loss * mask.float()).sum()
+                                batch_stats = Statistics(float(loss.cpu().data.numpy()), len(labels))
+                                stats.update(batch_stats)
+
                         for i, idx in enumerate(selected_ids):
                             _pred = []
                             if (len(batch.src_str[i]) == 0):
@@ -398,7 +400,7 @@ class Trainer(object):
             'model': model_state_dict,
             # 'generator': generator_state_dict,
             'opt': self.args,
-            'optims': self.optim,
+            'optim': self.optim,
             'elapse_time': self.stats_params.get_elapse(),
         }
         checkpoint_path = os.path.join(self.args.model_path, 'model_step_%d.pt' % step)

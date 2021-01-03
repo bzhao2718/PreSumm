@@ -216,7 +216,8 @@ class Trainer(object):
         # Set model in validating mode.
         self.model.eval()
         stats = Statistics()
-
+        valid_break_point = 2
+        valid_count = 0
         with torch.no_grad():
             for batch in valid_iter:
                 src = batch.src
@@ -231,6 +232,10 @@ class Trainer(object):
 
                 batch_stats = self.loss.monolithic_compute_loss(batch, outputs)
                 stats.update(batch_stats)
+                # this is for debugging, only trace one batch
+                # valid_count += 1
+                # if valid_count == valid_break_point:
+                #     break
             self._report_step(0, step, valid_stats=stats)
             return stats
 

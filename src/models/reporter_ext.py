@@ -193,10 +193,10 @@ class ReportMgr(ReportMgrBase):
         log metrics to neptune.ai
         """
         if curr_exp and step % int(args.neptune_metric_interval) == 0:
-            if stats_log.n_words > 0:
-                curr_exp.log_metric("accuracy", x=step, y=stats_log.accuracy())
+            if stats_log:
+                curr_exp.log_metric("loss", x=step, y=stats_log.loss)
                 curr_exp.log_metric("cross entropy", x=step, y=stats_log.xent())
-                curr_exp.log_metric("ppl", x=step, y=stats_log.ppl())
+                # curr_exp.log_metric("ppl", x=step, y=stats_log.ppl())
                 curr_exp.log_metric("lr", x=step, y=learning_rate)
 
     def _report_step(self, lr, step, train_stats=None, valid_stats=None):

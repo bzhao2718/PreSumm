@@ -25,16 +25,18 @@ def str2bool(v):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-task", default='abs', type=str, choices=['ext', 'abs'])
+    parser.add_argument("-task", default='ext', type=str, choices=['ext', 'abs'])
     parser.add_argument("-encoder", default='bert', type=str, choices=['bert', 'baseline'])
     parser.add_argument("-mode", default='train', type=str, choices=['train', 'validate', 'test', 'test_text'])
     # parser.add_argument("-mode", default='test_text', type=str, choices=['train', 'validate', 'test', 'test_text'])
     # parser.add_argument("-bert_data_path", default='../bert_data_new/cnndm')
-    parser.add_argument("-bert_data_path", default='../bert_data/bert_data_xsum/xsum')
-    parser.add_argument("-model_path", default='../models/xsum')
+    # parser.add_argument("-bert_data_path", default='../bert_data/bert_data_xsum/xsum')
+    parser.add_argument("-bert_data_path", default='../bert_data/xsum_valid/xsum') # for validation
+
+    parser.add_argument("-model_path", default='../models/xsum/ext/')
     # parser.add_argument("-model_path", default='../models/model_step_148000.pt')
     # parser.add_argument("-result_path", default='../results/cnndm')
-    parser.add_argument("-result_path", default='../results/xsum')
+    parser.add_argument("-result_path", default='../results/xsum_ext_train')
 
     # parser.add_argument("-result_path", default='/Users/jackz/Desktop/Test Results/mytest')
 
@@ -97,15 +99,17 @@ if __name__ == '__main__':
     parser.add_argument("-warmup_steps_dec", default=8000, type=int)
     parser.add_argument("-max_grad_norm", default=0, type=float)
 
-    parser.add_argument("-save_checkpoint_steps", default=5, type=int)
+    parser.add_argument("-save_checkpoint_steps", default=10, type=int)
     parser.add_argument("-accum_count", default=1, type=int)
-    parser.add_argument("-report_every", default=50, type=int)
+    parser.add_argument("-report_every", default=1, type=int)
     parser.add_argument("-train_steps", default=1000, type=int)
     parser.add_argument("-recall_eval", type=str2bool, nargs='?', const=True, default=False)
 
     parser.add_argument('-visible_gpus', default='-1', type=str)
     parser.add_argument('-gpu_ranks', default='0', type=str)
-    parser.add_argument('-log_file', default='../logs/my_xsum_log_train.log')
+    # parser.add_argument('-log_file', default='../logs/my_xsum_log_train.log')
+    parser.add_argument('-log_file', default='../logs/xsum_ext_train.log')
+
     parser.add_argument('-seed', default=666, type=int)
 
     parser.add_argument("-test_all", type=str2bool, nargs='?', const=True, default=False)
@@ -121,8 +125,8 @@ if __name__ == '__main__':
 
     parser.add_argument("-tensorboard_summary_path", default="../models/tensorboard/")
     # for logging some stats params and neptune.ai
-    parser.add_argument("-log_stat_params", default=1, type=int)
-    parser.add_argument("-neptune_exp_tags", default=["PreSumAbs"])
+    parser.add_argument("-log_stat_params",default=1, type=int)
+    parser.add_argument("-neptune_exp_tags", default=['ExpTest'])
     parser.add_argument("-neptune_prj_name", default='bzhao271828/TestPrj')
     parser.add_argument("-neptune_exp_name", default='TestExp')
     parser.add_argument("-neptune_metric_interval", default=1)
