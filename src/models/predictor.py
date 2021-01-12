@@ -188,13 +188,13 @@ class Translator(object):
         self.src_out_file.close()
 
         self.logger.info("translate (predictor.py) > about to cal rouge score.")
-        if (step != -1):
-            rouges = self._report_rouge(gold_path, can_path)
-            self.logger.info('Rouges at step %d \n%s' % (step, rouge_results_to_str(rouges)))
-            if self.tensorboard_writer is not None:
-                self.tensorboard_writer.add_scalar('test/rouge1-F', rouges['rouge_1_f_score'], step)
-                self.tensorboard_writer.add_scalar('test/rouge2-F', rouges['rouge_2_f_score'], step)
-                self.tensorboard_writer.add_scalar('test/rougeL-F', rouges['rouge_l_f_score'], step)
+        # if (step != -1):
+        #     rouges = self._report_rouge(gold_path, can_path)
+        #     self.logger.info('Rouges at step %d \n%s' % (step, rouge_results_to_str(rouges)))
+        #     if self.tensorboard_writer is not None:
+        #         self.tensorboard_writer.add_scalar('test/rouge1-F', rouges['rouge_1_f_score'], step)
+        #         self.tensorboard_writer.add_scalar('test/rouge2-F', rouges['rouge_2_f_score'], step)
+        #         self.tensorboard_writer.add_scalar('test/rougeL-F', rouges['rouge_l_f_score'], step)
 
     def valid_rouge_test(self, step):
         # eg. ../results/xsum/validate.128000.candidate
