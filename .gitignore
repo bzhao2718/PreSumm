@@ -157,3 +157,13 @@ Thumbs.db
 
 # ignore pyrouge folder
 src/pyrouge/
+external/
+external/*
+logs/
+logs/*
+gitignored/
+gitignored/*
+src/wodeutil/
+src/wodeutil/*
+results/
+results/*
